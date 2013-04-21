@@ -13,13 +13,17 @@ Ext.define('testing.controller.Books', {
     ],
     models: ['Books'],
     refs : [
-        {
+    {
         ref: 'detailbooks',
         selector: 'DetailBooks'
     },
     {
         ref: 'editform',
         selector: "form[name='editbooks']"
+    },
+    {
+        ref: 'searchitem',
+        selector: "form[name='searchbooks']"
     }
     ],
 
@@ -27,15 +31,16 @@ Ext.define('testing.controller.Books', {
         
         this.control({
             'Books': {
-                render: this.loadBooks,
                 itemclick: this.showDetails
             },
-            
             'AddBooks button[action=save]': {
                 click: this.addBooks
             },
             'SearchItem button[action=add]': {
                 click: this.addView
+            },
+            'SearchItem button[action=search]': {
+                click: this.searchBooks
             },
             'EditBooks button[action=save]': {
                 click: this.editBook
@@ -43,7 +48,7 @@ Ext.define('testing.controller.Books', {
             'DetailBooks button[action=edit]' :{
                 click : this.editView
             },
-             'DetailBooks button[action=delete]' :{
+            'DetailBooks button[action=delete]' :{
                 click : this.deleteBook
             }
             
@@ -52,7 +57,7 @@ Ext.define('testing.controller.Books', {
     
     showDetails : function(grid,rowIndex) {
         this.getDetailbooks().update(rowIndex.data);
-       this.currentRecord=rowIndex.data;
+        this.currentRecord=rowIndex.data;
     },
 
     addView : function() {
@@ -62,12 +67,12 @@ Ext.define('testing.controller.Books', {
         var values;
         this.getDetailbooks().update(values);
         var id=this.currentRecord._id;
-         Ext.Ajax.request({
-                        url: 'http://127.0.0.1:8000/delete',
-                        params: {
-                            _id : id
-                        }
-                    });
+        Ext.Ajax.request({
+            url: 'http://127.0.0.1:8000/delete',
+            params: {
+                _id : id
+            }
+        });
     },
     editBook : function(button) {
         
@@ -75,7 +80,7 @@ Ext.define('testing.controller.Books', {
         form   = win.down('form');
         if (form.isValid()) {
             var values = form.getValues();
-             this.getDetailbooks().update(values);
+            this.getDetailbooks().update(values);
             console.log("value",values);
             Ext.Ajax.request({
                 url: 'http://127.0.0.1:8000/edit',
@@ -123,27 +128,29 @@ Ext.define('testing.controller.Books', {
         }
         win.close();
     },
-    loadBooks : function () {
+    searchBooks : function () {
+        var search=this.getSearchitem().getForm().findField('search').getValue();
         console.log("books")
         var store = Ext.data.StoreManager.lookup('Books');
+        store.removeAll();
         Ext.Ajax.request({
             url: 'http://127.0.0.1:8000/books',
             params : {
-                text : "load"
+                search : search
             },
             success : function(response){
                 var text = response.responseText;
                 console.log(text)
                 var usertext=JSON.parse(text);
                 for(var i=0; i<usertext.length;i++){
-                    console.log("data",usertext[i]);
-                    store.add({
-                        title: usertext[i].title,
-                        text : usertext[i].text,
-                        author : usertext[i].author,
-                        tags : usertext[i].tags,
-                        _id: usertext[i]._id
-                    });  
+                    console.log("data",usertext[i])
+                        store.add({
+                            title: usertext[i].title,
+                            text : usertext[i].text,
+                            author : usertext[i].author,
+                            tags : usertext[i].tags,
+                            _id: usertext[i]._id
+                        });
                 }
             }
         });

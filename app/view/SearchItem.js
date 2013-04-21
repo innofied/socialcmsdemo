@@ -1,7 +1,7 @@
 Ext.define('testing.view.SearchItem' ,{
     extend: 'Ext.panel.Panel',
     alias: 'widget.SearchItem', 
-    title: "Add Books",
+    title: "Search Books",
     layout: {
         type: 'vbox'
     },
@@ -9,8 +9,19 @@ Ext.define('testing.view.SearchItem' ,{
     padding : 5,
     initComponent: function() {
 
-        this.items= [],
+        this.items= [ {
+            xtype: 'form',
+            name : 'searchbooks',
+            items: [
+            {
+                xtype: 'textfield',
+                name: 'search'
+            }]
+        }],
         this.buttons = [{
+            text: 'Search',
+            action: 'search'
+        },{
             text: 'Add',
             action: 'add'
         }
