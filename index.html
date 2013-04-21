@@ -1,35 +1,42 @@
 <!DOCTYPE HTML>
 <html>
-<head>
-    <meta charset="UTF-8">
-    <title>testing</title>
-    <!-- <x-compile> -->
+    <head>
+        <meta charset="UTF-8">
+        <title>testing</title>
+        
         <!-- <x-bootstrap> -->
-            <link rel="stylesheet" href="bootstrap.css">
-            <script src="ext/ext-dev.js"></script>
-            <script src="bootstrap.js"></script>
+        <link rel="stylesheet" href="bootstrap.css">
+
+        <!-- </x-compile> -->
+
+        <style>
+
+            .details-block {
+                padding: 0px;
+                margin: 0px;
+            }
+
+            .details-block li {
+                list-style: none;
+                padding: 10px;
+            }
+        </style>
+    </head>
+    <body>
+        <script type="text/template" id="tpl_book_details">
+            <ul class="details-block">
+                <li>Title : {title}</li>
+                <li>Text : {text}</li>
+                <li>Author : {author}</li>
+                <li>Tags : {tags}</li>
+            </ul>
+        </script>
+        
+        <!-- <x-compile> -->
+        
+        <script src="ext/ext-dev.js"></script>
+        <script src="bootstrap.js"></script>
         <!-- </x-bootstrap> -->
         <script src="app/app.js"></script>
-        
-    <!-- </x-compile> -->
-</head>
-<body>
-    <script type="text/template" id="tpl_book_details">
-        <div>
-            Id : {id}
-        </div>
-        <div>
-            Title : {title}
-        </div>
-        <div>
-            Text : {text}
-        </div>
-        <div>
-            Author : {author}
-        </div>
-        <div>
-            Tags : {tags}
-        </div>
-    </script>
-</body>
+    </body>
 </html>

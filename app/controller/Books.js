@@ -1,159 +1,228 @@
 Ext.define('testing.controller.Books', {
     extend: 'Ext.app.Controller',
+    
+    requires : ['Ext.window.MessageBox'],
 
     views: [
     'Books',
     'AddBooks',
-    'SearchItem',
+    'Viewport',
     'DetailBooks',
     'EditBooks'
     ],
+    
     stores: [
     'Books'
     ],
+    
     models: ['Books'],
+    
     refs : [
     {
-        ref: 'detailbooks',
-        selector: 'DetailBooks'
+        ref: 'detailBooks',
+        selector: 'detailbooks'
     },
     {
-        ref: 'editform',
+        ref: 'editForm',
         selector: "form[name='editbooks']"
     },
     {
-        ref: 'searchitem',
-        selector: "form[name='searchbooks']"
+        ref: 'searchItem',
+        selector: "textfield[name='search']"
+    },
+    
+    {
+        ref : 'searchResultPanel',
+        selector : 'container[name="search_result_panel"]'
     }
     ],
 
-    init: function() {
-        
+    init: function() {        
         this.control({
-            'Books': {
+            'books': {
                 itemclick: this.showDetails
             },
-            'AddBooks button[action=save]': {
+            'addbooks button[action=save]': {
                 click: this.addBooks
             },
-            'SearchItem button[action=add]': {
-                click: this.addView
+            'button[action=add]': {
+                click: function() {
+                    Ext.widget('addbooks');  
+                }
             },
-            'SearchItem button[action=search]': {
+            'button[action=search]': {
                 click: this.searchBooks
             },
-            'EditBooks button[action=save]': {
+            'editbooks button[action=save]': {
                 click: this.editBook
             },
-            'DetailBooks button[action=edit]' :{
-                click : this.editView
+            'detailbooks button[action=edit]' :{
+                click : this.loadEditData
             },
-            'DetailBooks button[action=delete]' :{
+            'detailbooks button[action=delete]' :{
                 click : this.deleteBook
             }
             
         });
     },
     
-    showDetails : function(grid,rowIndex) {
-        this.getDetailbooks().update(rowIndex.data);
-        this.currentRecord=rowIndex.data;
+    getApi : (function(){
+        var baseUrl = 'http://127.0.0.1:8000/';
+         
+        return {
+            deleteBook : baseUrl + 'delete',
+            register : baseUrl + 'register',
+            search : baseUrl + 'search',
+            edit : baseUrl + 'edit'
+        }
+    }()),
+    
+    showDetails : function(grid, record, item, index) {
+        record.index = index;
+        this.getDetailBooks().update(record.getData());
+        this.currentRecord = record;
     },
 
-    addView : function() {
-        var view = Ext.widget('AddBooks');  
-    },
     deleteBook : function () {
-        var values;
-        this.getDetailbooks().update(values);
-        var id=this.currentRecord._id;
+        var me = this,
+        bookStore = Ext.getStore('Books'),
+        toBeDeletedRecord = Ext.clone(me.currentRecord),
+        recordIndex = me.currentRecord.index;
+        
+        me.getDetailBooks().update('');
+        bookStore.remove(me.currentRecord);
+        
         Ext.Ajax.request({
-            url: 'http://127.0.0.1:8000/delete',
+            url: me.getApi.deleteBook,
             params: {
-                _id : id
+                _id : me.currentRecord.get('_id')
+            },
+            
+            success : function(response){
+                var json = Ext.decode(response.responseText);
+                
+                if(json && !json.success){
+                    bookStore.insert(recordIndex, toBeDeletedRecord);
+                }
+            },
+            
+            failure : function(){
+                Ext.Msg.alert('Unable to connect to server. Please try again.');
             }
         });
-    },
-    editBook : function(button) {
         
-        var win    = button.up('window'),
+    },
+    
+    editBook : function(button) {
+        var me = this,
+        win    = button.up('window'),
         form   = win.down('form');
+        
         if (form.isValid()) {
             var values = form.getValues();
-            this.getDetailbooks().update(values);
-            console.log("value",values);
+            
+            me.currentRecord.set(values);
             Ext.Ajax.request({
-                url: 'http://127.0.0.1:8000/edit',
-                params: {
-                    _id : values._id,
-                    title: values.title,
-                    text : values.text,
-                    author : values.author,
-                    tags: values.tags
+                url: me.getApi.edit,
+                params: me.currentRecord.getData(),
+                success : function(response){
+                    var json = JSON.parse(response.responseText);
+                    win.close();
+                    
+                    if(json.success){
+                        me.getDetailBooks().update(values);
+                    }else{
+                        me.showMsg(json.message || 'Unable to update book. Please try again');
+                    }
+                },
+            
+                failure : function(){
+                    me.showMsg('Unable to connect to server. Please try again.');
                 }
             });
         }
         else {
-            console.log("Texfield Blank")
+            me.showMsg('Please fill all the necessary fields.');
         }
-        win.close();
+        
     },
-    editView : function(button) {
-        var view = Ext.widget('EditBooks');
-        this.getEditform().getForm().findField('title').setValue(this.currentRecord.title)
-        this.getEditform().getForm().findField('_id').setValue(this.currentRecord._id)
-        this.getEditform().getForm().findField('text').setValue(this.currentRecord.text)
-        this.getEditform().getForm().findField('author').setValue(this.currentRecord.author)
-        this.getEditform().getForm().findField('tags').setValue(this.currentRecord.tags)
+    
+    loadEditData : function() {
+        Ext.widget('editbooks');        
+        this.getEditForm().loadRecord(this.currentRecord);
     },
 
     addBooks : function (button) {
-        var win    = button.up('window'),
+        var me = this,
+        win    = button.up('window'),
         form   = win.down('form');
+        
         if (form.isValid()) {
-            var values = form.getValues();
-            console.log(values);
             Ext.Ajax.request({
-                url: 'http://127.0.0.1:8000/register',
-                params: {
-                    title: values.title,
-                    text : values.text,
-                    author : values.author,
-                    tags: values.tags
+                url: me.getApi.register,
+                params: form.getValues(),
+                
+                success : function(response){
+                    var json = JSON.parse(response.responseText);
+                    
+                    if(json.success){
+                        me.showMsg( 'Book added successfully', 'Done');
+                    }else{
+                        me.showMsg(json.message || 'Unable to add book. Please try again');
+                    }
+                },
+            
+                failure : function(){
+                    me.showMsg('Unable to connect to server. Please try again.');
+                }
+            });
+            
+            win.close();
+            
+        } else {
+            me.showMsg('Please provide all the data');
+        }
+        
+    },
+    
+    searchBooks : function (){
+        var me = this,
+        query = me.getSearchItem().getValue(),
+        bookStore = Ext.getStore('Books');
+        console.log(query);
+        if(query.length > 0){
+            bookStore.removeAll();
+            var mask = new Ext.LoadMask({
+                target  :me.getSearchResultPanel(),
+                msg:"Searching '" + query + "' ..."
+            });
+            mask.show();
+        
+            Ext.Ajax.request({
+                url: me.getApi.search,
+                method : 'GET',
+                params : {
+                    search : query
+                },
+                
+                success : function(response){
+                    mask.hide();
+                    var json = JSON.parse(response.responseText);
+                    bookStore.add(json);
+                },
+            
+                failure : function(){
+                    mask.hide();
+                    me.showMsg('Unable to connect to server. Please try again.');
                 }
             });
         }
-        else {
-            console.log("Texfield Blank")
-        }
-        win.close();
     },
-    searchBooks : function () {
-        var search=this.getSearchitem().getForm().findField('search').getValue();
-        console.log("books")
-        var store = Ext.data.StoreManager.lookup('Books');
-        store.removeAll();
-        Ext.Ajax.request({
-            url: 'http://127.0.0.1:8000/books',
-            params : {
-                search : search
-            },
-            success : function(response){
-                var text = response.responseText;
-                console.log(text)
-                var usertext=JSON.parse(text);
-                for(var i=0; i<usertext.length;i++){
-                    console.log("data",usertext[i])
-                        store.add({
-                            title: usertext[i].title,
-                            text : usertext[i].text,
-                            author : usertext[i].author,
-                            tags : usertext[i].tags,
-                            _id: usertext[i]._id
-                        });
-                }
-            }
-        });
+    
+    showMsg : function(msg, title){
+        if(msg){
+            Ext.MessageBox.alert(title || 'Error', msg);
+        }
     }
    
 });

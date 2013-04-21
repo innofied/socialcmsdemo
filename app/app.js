@@ -15,11 +15,12 @@
 
 Ext.application({
     name: 'testing',
+    requires : ['Ext.container.Viewport'],
 
     views: [
     'Books',
     'AddBooks',
-    'SearchItem',
+    'Viewport',
     'DetailBooks',
     'EditBooks'
     ],
@@ -27,29 +28,6 @@ Ext.application({
     controllers: [
     'Books'
     ],
-  
-    launch: function() {
-        Ext.create('Ext.container.Viewport', {
-            layout : 'border',
-            items: [{
-                title: 'Search',
-                region: 'north',     // position for region
-                xtype: 'SearchItem',
-                height: 100,
-                margins: '0 5'
-            },{
-                title: 'Search Content',
-                region:'west',
-                xtype: 'Books',
-                margins: '0 5',
-                width: 200
-            },{
-                title: 'Detail Content',
-                region:'center',
-                xtype: 'DetailBooks',
-                margins: '0 5',
-                width: 700
-            }]
-        });
-    }
+    
+    autoCreateViewport : true
 });

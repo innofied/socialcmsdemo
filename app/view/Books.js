@@ -1,6 +1,6 @@
 Ext.define('testing.view.Books' ,{
     extend: 'Ext.grid.Panel',
-    alias: 'widget.Books',
+    alias: 'widget.books',
     title: 'Books',
     store: 'Books',
     initComponent: function() {
