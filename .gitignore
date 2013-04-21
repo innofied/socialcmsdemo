@@ -53,3 +53,5 @@
 /packages/ext-theme-gray/.sencha/
 /packages/ext-theme-neptune/.sencha/
 /packages/ext-theme-neutral/.sencha/
+/servermodule/node_modules/.bin/
+/servermodule/node_modules/mongodb/node_modules/bson/build/Release/.deps/
