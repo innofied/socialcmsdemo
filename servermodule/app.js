@@ -42,7 +42,8 @@
                     title:title,
                     text:text,
                     author : author,
-                    tags : tags
+                    tags : tags,
+                    keywords : [title, author]
                 }, function () {
                     var response={};
                     response.success="true";
@@ -50,9 +51,9 @@
                 }); 
             }, function(){
                 var response={};
-                    response.success="true";
-                    response.message="Unable to load collection."
-                    res.send(response);
+                response.success="true";
+                response.message="Unable to load collection."
+                res.send(response);
             });
         });
     });
@@ -76,9 +77,9 @@
                 });
             }, function(){
                 var response={};
-                    response.success="true";
-                    response.message="Unable to load collection."
-                    res.send(response);
+                response.success="true";
+                response.message="Unable to load collection."
+                res.send(response);
             });
         });
     });
@@ -107,7 +108,8 @@
                         title : title,
                         text : text,
                         author : author,
-                        tags : tags
+                        tags : tags,
+                        keywords : [title, author]
                     }
                 }, function () {
                     var response={};
@@ -116,27 +118,21 @@
                 }); 
             }, function(){
                 var response={};
-                    response.success="true";
-                    response.message="Unable to load collection."
-                    res.send(response);
+                response.success="true";
+                response.message="Unable to load collection."
+                res.send(response);
             });
         });
     });
 
     app.get('/search',express.bodyParser(), function(req, res) {
-        var search = req.query.search,
-        matchedItem=[];
+        var search = req.query.search;
         require('mongodb').connect(mongourl, function(err, conn){
             conn.collection('book', function(err, coll){
-                coll.find({
-                    },function(err,cursor){
+                coll.ensureIndex( { keywords: 1 } )
+                coll.find({ keywords : search },function(err,cursor){
                         cursor.toArray(function(err, items) {
-                            for(var i=0; i<items.length;i++){
-                                if(items[i].title.search(search)!==-1 || items[i].text.search(search)!==-1 || items[i].author.search(search)!==-1 || items[i].tags.search(search)!==-1){
-                                    matchedItem.push(items[i]);
-                                }
-                            }
-                            res.send(matchedItem);
+                            res.send(items);
                         });
                     });
             })
