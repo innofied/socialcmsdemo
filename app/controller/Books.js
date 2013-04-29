@@ -8,11 +8,14 @@ Ext.define('testing.controller.Books', {
     'AddBooks',
     'Viewport',
     'DetailBooks',
-    'EditBooks'
+    'EditBooks',
+    'Dashboard',
+    'ViewMail'
     ],
     
     stores: [
-    'Books'
+    'Books',
+    'Mail'
     ],
     
     models: ['Books'],
@@ -21,6 +24,10 @@ Ext.define('testing.controller.Books', {
     {
         ref: 'detailBooks',
         selector: 'detailbooks'
+    },
+     {
+        ref: 'viewMail',
+        selector: 'viewmail'
     },
     {
         ref: 'editForm',
@@ -42,6 +49,7 @@ Ext.define('testing.controller.Books', {
             'books': {
                 itemclick: this.showDetails
             },
+            
             'addbooks button[action=save]': {
                 click: this.addBooks
             },
@@ -49,6 +57,10 @@ Ext.define('testing.controller.Books', {
                 click: function() {
                     Ext.widget('addbooks');  
                 }
+            },
+            'dashboard' :{
+                render: this.loadEmail,
+                itemclick: this.showEmail
             },
             'button[action=search]': {
                 click: this.searchBooks
@@ -67,13 +79,14 @@ Ext.define('testing.controller.Books', {
     },
     
     getApi : (function(){
-        var baseUrl = 'http://127.0.0.1:8000/';
-         
+        //var baseUrl = 'http://innofied.nodejitsu.com/';
+        var baseUrl = 'http://localhost:8000/';
         return {
             deleteBook : baseUrl + 'delete',
             register : baseUrl + 'register',
             search : baseUrl + 'search',
-            edit : baseUrl + 'edit'
+            edit : baseUrl + 'edit',
+            reademail : baseUrl + 'reademail'
         }
     }()),
     
@@ -81,6 +94,39 @@ Ext.define('testing.controller.Books', {
         record.index = index;
         this.getDetailBooks().update(record.getData());
         this.currentRecord = record;
+    },
+     showEmail : function(grid, record, item, index) {
+         Ext.widget('viewmail'); 
+         console.log(record)
+        this.getViewMail().loadRecord();
+        
+    },
+    loadEmail : function () {
+        console.log("load");
+        var me = this,
+        mailStore = Ext.getStore('Mail');
+        Ext.Ajax.request({
+            url: me.getApi.reademail,
+            method : 'GET',
+            
+            success : function(response){
+                var json = JSON.parse(response.responseText);
+                for(var i=0; i<json.length;i++){
+                   var data = {};
+                   var subopen=json[i].header.indexOf(']');
+                   data.from=json[i].header.substr(1,subopen);
+                   var subclose=json[i].header.indexOf(']',2);
+                   data.subject=json[i].header.substr(subopen+2,subclose);
+                   data.date=json[i].date;
+                   mailStore.add(data);
+                }
+            },
+            
+            failure : function(err){
+                console.log(err);
+            }
+        });
+
     },
 
     deleteBook : function () {

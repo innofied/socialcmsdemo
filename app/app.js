@@ -22,7 +22,9 @@ Ext.application({
     'AddBooks',
     'Viewport',
     'DetailBooks',
-    'EditBooks'
+    'EditBooks',
+    'Dashboard',
+    'ViewMail'
     ],
 
     controllers: [
