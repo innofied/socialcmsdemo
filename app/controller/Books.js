@@ -25,8 +25,8 @@ Ext.define('testing.controller.Books', {
         ref: 'detailBooks',
         selector: 'detailbooks'
     },
-     {
-        ref: 'viewMail',
+    {
+        ref: 'viewmail',
         selector: 'viewmail'
     },
     {
@@ -37,7 +37,6 @@ Ext.define('testing.controller.Books', {
         ref: 'searchItem',
         selector: "textfield[name='search']"
     },
-    
     {
         ref : 'searchResultPanel',
         selector : 'container[name="search_result_panel"]'
@@ -59,7 +58,9 @@ Ext.define('testing.controller.Books', {
                 }
             },
             'dashboard' :{
-                render: this.loadEmail,
+                render: this.loadEmail
+            },
+            'grid[name="maillist"]' :{
                 itemclick: this.showEmail
             },
             'button[action=search]': {
@@ -95,14 +96,12 @@ Ext.define('testing.controller.Books', {
         this.getDetailBooks().update(record.getData());
         this.currentRecord = record;
     },
-     showEmail : function(grid, record, item, index) {
-         Ext.widget('viewmail'); 
-         console.log(record)
-        this.getViewMail().loadRecord();
-        
+    
+    showEmail : function(grid, record, item, index) {        
+        this.getViewmail().update(record.getData());
     },
+    
     loadEmail : function () {
-        console.log("load");
         var me = this,
         mailStore = Ext.getStore('Mail');
         Ext.Ajax.request({
@@ -111,19 +110,11 @@ Ext.define('testing.controller.Books', {
             
             success : function(response){
                 var json = JSON.parse(response.responseText);
-                for(var i=0; i<json.length;i++){
-                   var data = {};
-                   var subopen=json[i].header.indexOf(']');
-                   data.from=json[i].header.substr(1,subopen);
-                   var subclose=json[i].header.indexOf(']',2);
-                   data.subject=json[i].header.substr(subopen+2,subclose);
-                   data.date=json[i].date;
-                   mailStore.add(data);
-                }
+                mailStore.add(json)
             },
             
             failure : function(err){
-                console.log(err);
+                Ext.Msg.alert('Unable to connect to server. Please try again.');
             }
         });
 

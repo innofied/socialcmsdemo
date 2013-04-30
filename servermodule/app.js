@@ -2,7 +2,8 @@
     var mongo = require('mongodb'),
     express = require('express'),
     app = express(),
-    BSON = mongo.BSONPure;
+    BSON = mongo.BSONPure,
+    showbody;
 
     var mongodb = {
         "hostname":"dbh22.mongolab.com",
@@ -12,6 +13,13 @@
         "name":"",
         "db":"socialcms"
     }
+    var Imap = require('imap');
+
+    var imap = new Imap({
+        host: 'imap.gmail.com',
+        port: 993,
+        secure: true
+    });
   
     var generate_mongo_url = function(obj){
         obj.hostname = (obj.hostname);
@@ -23,6 +31,86 @@
     };
 
     var mongourl = generate_mongo_url(mongodb);
+    
+    
+    var allowCrossDomain = function(req, res, next) {
+        res.header("Access-Control-Allow-Origin", "*");
+        res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");
+        res.header("Access-Control-Allow-Headers", req.headers['access-control-request-headers']);
+        if ('OPTIONS' == req.method) {
+            res.send(200);
+        }
+        else {
+            next();
+        }
+    }
+    app.configure(function() {
+    
+        app.use(allowCrossDomain);
+    
+    });
+     app.get('/settings',express.bodyParser(), function(req, res) {
+         imap.user=req.body.username;
+         imap.password=req.body.password;
+     });
+    app.get('/reademail',express.bodyParser(), function(req, res) {
+
+        function die(err) {
+            console.log('Uh oh: ' + err);
+            process.exit(1);
+        }
+
+        function openInbox(cb) {
+            imap.connect(function(err) {
+                if (err) die(err);
+                imap.openBox('INBOX', true, cb);
+            });
+        }
+
+        openInbox(function(err, mailbox) {
+            var mail=[];
+            
+            if (err) die(err);
+            imap.search([ 'UNSEEN', ['SINCE', 'April 29, 2013'] ], function(err, results) {
+                if (err) die(err);
+                imap.fetch(results,
+                {
+                    headers: ['from', 'subject'],
+                    body: true,
+                    cb: function(fetch) {
+                        fetch.on('message', function(msg) {
+                            var data={},body = '';
+                            msg.on('headers', function(hdrs) {
+                                data.from=hdrs.from.toString('utf8');
+                                data.subject=hdrs.subject;
+                                
+                            });
+                            msg.on('data', function(chunk) {
+                                body += chunk.toString('utf8');
+                            });
+                            msg.on('end', function(hdrs) {
+                                
+                                if(showbody)
+                                { console.log(body)
+                                    showbody=false;
+                                }
+                                
+                                data.body=body;
+                                data.date=msg.date;
+                                mail.push(data);
+
+                            });
+                        });
+                    }
+                }, function(err) {
+                    if (err) throw err;
+                    imap.logout();
+                    res.send(mail)
+                }
+                );
+            });
+        });
+    });
 
     app.post('/register',express.bodyParser(), function(req, res) {
         var title = req.body.title,
@@ -129,12 +217,16 @@
         var search = req.query.search;
         require('mongodb').connect(mongourl, function(err, conn){
             conn.collection('book', function(err, coll){
-                coll.ensureIndex( { keywords: 1 } )
-                coll.find({ keywords : search },function(err,cursor){
-                        cursor.toArray(function(err, items) {
-                            res.send(items);
-                        });
+                coll.ensureIndex( {
+                    keywords: 1
+                } )
+                coll.find({
+                    keywords : search
+                },function(err,cursor){
+                    cursor.toArray(function(err, items) {
+                        res.send(items);
                     });
+                });
             })
         })
     });

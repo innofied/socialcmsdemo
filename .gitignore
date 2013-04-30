@@ -55,3 +55,4 @@
 /packages/ext-theme-neutral/.sencha/
 /servermodule/node_modules/.bin/
 /servermodule/node_modules/mongodb/node_modules/bson/build/Release/.deps/
+/servermodule/node_modules/mailparser/node_modules/iconv/build/Release/.deps/

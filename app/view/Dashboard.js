@@ -33,29 +33,46 @@ Ext.define('testing.view.Dashboard', {
         this.items = [{
             id: 'col-1',
             items: [{
-                id: 'portlet-2',
-                title: ' Grid Portlet',
+                id: 'portlet-1',
+                title: 'Mail List',
                 tools: this.getTools(),
                 items :[{
                     xtype : 'grid',
+                    name :'maillist',
                     border : 0,
                     store: Ext.getStore('Mail'),
+                    forcefit : true,
                     columns: [ {
                         text     : 'From',
-                        width     : 300,
+                        width     : 200,
                         sortable : false,
                         dataIndex: 'from'
                     },{
                         text     : 'Subject',
-                        width     : 300,
+                        flex     : 1,
                         sortable : false,
                         dataIndex: 'subject'
                     },{
                         text     : 'Date',
-                        width     : 300,
+                        width     : 100,
                         sortable : false,
                         dataIndex: 'date'
                     }]
+                }],
+                
+                listeners: {
+                    'close': Ext.bind(this.onPortletClose, this)
+                }
+            }]
+        },{
+            id: 'col-2',
+            items: [{
+                id: 'portlet-2',
+                title: 'Show Mail',
+                tools: this.getTools(),
+                items :[{
+                    xtype : 'viewmail',
+                    name:'viewmailportlet'
                 }],
                 
                 listeners: {

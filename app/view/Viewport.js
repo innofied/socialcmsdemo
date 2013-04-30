@@ -4,9 +4,8 @@ Ext.define('testing.view.Viewport' ,{
   layout: 'card',
    items:[{
     xtype: 'tabpanel',
-    //width:400,
-    //height:400,
-    activeTab: 1, // index or id
+    name:'viewpanel',
+    activeTab: 1,
     items:[{
         title: 'Search',
         layout : 'border',
