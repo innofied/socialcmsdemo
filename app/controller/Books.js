@@ -1,7 +1,11 @@
 Ext.define('testing.controller.Books', {
     extend: 'Ext.app.Controller',
     
-    requires : ['Ext.window.MessageBox'],
+    requires : ['Ext.window.MessageBox',
+    'Ext.tab.Panel',
+    'Ext.layout.container.Border',
+    'Ext.form.Panel'
+    ],
 
     views: [
     'Books',
@@ -34,6 +38,10 @@ Ext.define('testing.controller.Books', {
         selector: "form[name='editbooks']"
     },
     {
+        ref: 'loginForm',
+        selector: "form[name='mail-login']"
+    },
+    {
         ref: 'searchItem',
         selector: "textfield[name='search']"
     },
@@ -57,14 +65,14 @@ Ext.define('testing.controller.Books', {
                     Ext.widget('addbooks');  
                 }
             },
-            'dashboard' :{
-                render: this.loadEmail
-            },
             'grid[name="maillist"]' :{
                 itemclick: this.showEmail
             },
             'button[action=search]': {
                 click: this.searchBooks
+            },
+            'button[action=login]': {
+                click: this.mailLogin
             },
             'editbooks button[action=save]': {
                 click: this.editBook
@@ -80,17 +88,52 @@ Ext.define('testing.controller.Books', {
     },
     
     getApi : (function(){
-        //var baseUrl = 'http://innofied.nodejitsu.com/';
-        var baseUrl = 'http://localhost:8000/';
+        var baseUrl = 'http://innofied.nodejitsu.com/';
+        //var baseUrl = 'http://localhost:8000/';
         return {
             deleteBook : baseUrl + 'delete',
             register : baseUrl + 'register',
             search : baseUrl + 'search',
             edit : baseUrl + 'edit',
-            reademail : baseUrl + 'reademail'
+            reademail : baseUrl + 'reademail',
+            login : baseUrl + 'settings'
         }
     }()),
     
+    mailLogin : function () {
+        var login = this.getLoginForm().getValues(),
+        me=this;
+        Ext.Ajax.request({
+            url: this.getApi.login,
+            method : 'GET',
+            params: {
+                username : login.username,
+                password : login.password
+            },
+            success : function(response){
+                var json = JSON.parse(response.responseText);
+                if(json.success === "true"){
+                    var mailStore = Ext.getStore('Mail');
+                    Ext.Ajax.request({
+                        url: me.getApi.reademail,
+                        method : 'GET',
+            
+                        success : function(response){
+                            var json = JSON.parse(response.responseText);
+                            mailStore.add(json)
+                        },
+            
+                        failure : function(err){
+                            Ext.Msg.alert('Unable to connect to server. Please try again.');
+                        }
+                    });   
+                }
+            },
+            failure : function(err){
+                Ext.Msg.alert('Unable to connect to server. Please try again.');
+            }
+        });
+    },
     showDetails : function(grid, record, item, index) {
         record.index = index;
         this.getDetailBooks().update(record.getData());
@@ -99,25 +142,6 @@ Ext.define('testing.controller.Books', {
     
     showEmail : function(grid, record, item, index) {        
         this.getViewmail().update(record.getData());
-    },
-    
-    loadEmail : function () {
-        var me = this,
-        mailStore = Ext.getStore('Mail');
-        Ext.Ajax.request({
-            url: me.getApi.reademail,
-            method : 'GET',
-            
-            success : function(response){
-                var json = JSON.parse(response.responseText);
-                mailStore.add(json)
-            },
-            
-            failure : function(err){
-                Ext.Msg.alert('Unable to connect to server. Please try again.');
-            }
-        });
-
     },
 
     deleteBook : function () {

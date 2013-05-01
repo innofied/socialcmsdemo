@@ -2,9 +2,8 @@
     var mongo = require('mongodb'),
     express = require('express'),
     app = express(),
-    BSON = mongo.BSONPure,
-    showbody;
-
+    BSON = mongo.BSONPure;
+    var i=0;
     var mongodb = {
         "hostname":"dbh22.mongolab.com",
         "port":27227,
@@ -44,23 +43,29 @@
             next();
         }
     }
+    
     app.configure(function() {
     
         app.use(allowCrossDomain);
     
     });
-     app.get('/settings',express.bodyParser(), function(req, res) {
-         imap.user=req.body.username;
-         imap.password=req.body.password;
-     });
+    
+    app.get('/settings',express.bodyParser(), function(req, res) {
+        imap._options.username=req.query.username;
+        imap._options.password=req.query.password;
+        var response={};
+        response.success="true";
+        res.send(response);
+    });
+    
     app.get('/reademail',express.bodyParser(), function(req, res) {
-
         function die(err) {
             console.log('Uh oh: ' + err);
             process.exit(1);
         }
 
         function openInbox(cb) {
+            
             imap.connect(function(err) {
                 if (err) die(err);
                 imap.openBox('INBOX', true, cb);
@@ -71,7 +76,7 @@
             var mail=[];
             
             if (err) die(err);
-            imap.search([ 'UNSEEN', ['SINCE', 'April 29, 2013'] ], function(err, results) {
+            imap.search([ 'UNSEEN' ], function(err, results) {
                 if (err) die(err);
                 imap.fetch(results,
                 {
@@ -79,9 +84,12 @@
                     body: true,
                     cb: function(fetch) {
                         fetch.on('message', function(msg) {
+                            console.log("fetch",i++);
+                            console.log(msg.date);
+                            console.log("msg complete");
                             var data={},body = '';
                             msg.on('headers', function(hdrs) {
-                                data.from=hdrs.from.toString('utf8');
+                                data.from=hdrs.from;
                                 data.subject=hdrs.subject;
                                 
                             });
@@ -89,23 +97,21 @@
                                 body += chunk.toString('utf8');
                             });
                             msg.on('end', function(hdrs) {
-                                
-                                if(showbody)
-                                { console.log(body)
-                                    showbody=false;
-                                }
-                                
                                 data.body=body;
                                 data.date=msg.date;
                                 mail.push(data);
-
+                                if(mail.length==30){
+                                    res.send(mail);
+                                }
                             });
+                        });
+                        fetch.on('end', function() {
+                            console.log('Done fetching bodies!');
                         });
                     }
                 }, function(err) {
                     if (err) throw err;
                     imap.logout();
-                    res.send(mail)
                 }
                 );
             });
