@@ -50,14 +50,12 @@ Ext.define('testing.view.Viewport' ,{
                                     xtype: 'textfield',
                                     fieldLabel: 'Username',
                                     name: 'username',
-                                    value:'sapphire.indranil@gmail.com',
                                     allowBlank:false
                                 },
                                 {
                                     xtype: 'textfield',
                                     fieldLabel: 'Password',
                                     name: 'password',
-                                    value:'georgebubai04011991',
                                     inputType: 'password',
                                     allowBlank:false
                                 },{
